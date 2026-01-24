@@ -1,14 +1,20 @@
 # CronLib: High-Performance Go Cron Library
 
-CronLib is a lightweight, thread-safe, and high-performance cron scheduling library for Go. It mirrors the functionality of `node-cron` but leverages Go's concurrency primitives (Goroutines, Channels, `sync.RWMutex`) to handle thousands of concurrent jobs with sub-millisecond precision.
+[![Go Reference](https://pkg.go.dev/badge/github.com/yourusername/cronlib.svg)](https://pkg.go.dev/github.com/yourusername/cronlib)
+[![Go Report Card](https://goreportcard.com/badge/github.com/yourusername/cronlib)](https://goreportcard.com/report/github.com/yourusername/cronlib)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+**CronLib** is a lightweight, thread-safe, and high-performance cron scheduling library for Go. It is designed to handle thousands of concurrent jobs with sub-millisecond precision, mirroring `node-cron` functionality but optimized for the Go ecosystem.
 
 ## Key Features
 
-*   **High Performance**: Uses a bitmask-based parser for O(1) matching of cron fields.
-*   **Event-Driven Scheduler**: Avoids inefficient polling (1-second tickers). Uses a single `time.Timer` to sleep exactly until the next scheduled job.
-*   **Thread Safety**: All operations (`AddJob`, `RemoveJob`, `Stop`) are safe for concurrent use.
-*   **Graceful Shutdown**: Ensures all running jobs complete before the application exits.
-*   **Standard Cron Syntax**: Supports 6-field cron expressions including steps (`*/5`), ranges (`1-5`), and lists (`1,3,5`).
+*   🚀 **High Performance**: Bitmask-based parser for O(1) matching of cron fields.
+*   🕒 **Sub-millisecond Precision**: Uses `time.Timer` for event-driven scheduling (no polling tickers).
+*   🔒 **Thread-Safe**: Safe for concurrent job management (adding, removing, stopping).
+*   ⚙️ **Overlap Policies**: Control job execution overlap with `Allow`, `Forbid`, or `Replace` policies.
+*   💾 **Persistence**: Native SQLite support to track last run times and execution history.
+*   🌐 **Distributed Locks**: Redis integration for cluster-wide job synchronization.
+*   🖥️ **Web Dashboard**: Built-in UI to monitor job status and execution logs in real-time.
 
 ## Installation
 
@@ -16,7 +22,7 @@ CronLib is a lightweight, thread-safe, and high-performance cron scheduling libr
 go get github.com/yourusername/cronlib
 ```
 
-## Usage
+## Quick Start
 
 ```go
 package main
@@ -24,68 +30,76 @@ package main
 import (
 	"fmt"
 	"time"
-
-	"cronlib" // Replace with actual module path
+	"cronlib"
 )
 
 func main() {
 	c := cronlib.NewCron()
 
 	// Add a job: runs every 5 seconds
-	id, err := c.AddJob("*/5 * * * * *", func() {
-		fmt.Println("Job running every 5 seconds:", time.Now())
+	c.AddJob("*/5 * * * * *", func() {
+		fmt.Println("Tick:", time.Now().Format("15:04:05"))
 	})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Added job with ID: %s\n", id)
 
-	// Start the scheduler
 	c.Start()
-
-	// Run for 20 seconds
-	time.Sleep(20 * time.Second)
-
-	// Graceful shutdown
-	fmt.Println("Stopping scheduler...")
-	c.Stop()
-	fmt.Println("Scheduler stopped.")
+	select {} // Keep running
 }
 ```
 
-## Advanced Features
+## Concurrency Control (Overlap Policies)
 
-### Persistence (SQLite)
-Use `cronlib/store/sqlite` to persist job states and execution logs.
+CronLib provides fine-grained control over how jobs behave when a new execution is scheduled while a previous instance is still running.
+
+| Policy | Description |
+| :--- | :--- |
+| `OverlapAllow` | (Default) Allows multiple instances to run concurrently. |
+| `OverlapForbid` | Skips the execution if the previous instance is still running. |
+| `OverlapReplace` | Cancels the running instance and starts the new one immediately. |
+
+```go
+c.AddJobWithOptions("*/10 * * * * *", myTask, cronlib.JobOptions{
+    Overlap: cronlib.OverlapReplace,
+})
+```
+
+## Advanced Production Features
+
+### 1. Persistent State (SQLite)
+Track job history and recover schedules across restarts.
 
 ```go
 import "cronlib/store/sqlite"
 
 store, _ := sqlite.New("cron.db")
-c := cronlib.NewCron()
 c.SetJobStore(store)
 ```
 
-### Distributed Locks (Redis)
-Use `cronlib/lock/redis` to prevent concurrent execution across multiple nodes.
+### 2. Distributed Locks (Redis)
+Ensure a job runs only once across a cluster.
 
 ```go
 import "cronlib/lock/redis"
 
 lock := redis.New("localhost:6379")
-c := cronlib.NewCron()
 c.SetDistLock(lock)
 ```
 
-### Web Dashboard
-A built-in dashboard to monitor jobs.
+### 3. Web Dashboard
+Embedded UI accessible at `http://localhost:8080`.
 
 ```go
 import "cronlib/dashboard"
 
-handler := dashboard.NewHandler(c)
-http.ListenAndServe(":8080", handler)
+http.Handle("/", dashboard.NewHandler(c))
+http.ListenAndServe(":8080", nil)
 ```
+
+## Monitoring
+The Web Dashboard provides a live view of:
+- **Job ID & Expression**
+- **Next Scheduled Run**
+- **Last Execution Time**
+- **Real-time Status** (Running/Idle)
 
 ## License
 
