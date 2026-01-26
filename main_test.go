@@ -174,7 +174,7 @@ func TestNext(t *testing.T) {
 		},
 		{
 			name: "DOM/DOW with steps",
-			// */2 = 2,4,6... ? 
+			// */2 = 2,4,6... ?
 			// DOW 0-6. */2 => 0, 2, 4, 6 (Sun, Tue, Thu, Sat)
 			spec: "0 0 0 * * */2",
 			from: mkTime(2023, 1, 1, 0, 0, 0), // Jan 1 is Sun (0)
@@ -206,11 +206,11 @@ func TestCron_Integration_Run(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	
+
 	start := time.Now()
 	ran := false
 	var ranOnce sync.Once
-	
+
 	// Run every second
 	_, err := c.AddJob("* * * * * *", func() {
 		ranOnce.Do(func() {
@@ -221,14 +221,14 @@ func TestCron_Integration_Run(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddJob failed: %v", err)
 	}
-	
+
 	// Wait for it to run
 	done := make(chan struct{})
 	go func() {
 		wg.Wait()
 		close(done)
 	}()
-	
+
 	select {
 	case <-done:
 		// Success
@@ -239,7 +239,7 @@ func TestCron_Integration_Run(t *testing.T) {
 	case <-time.After(3 * time.Second):
 		t.Fatal("Job did not run within 3 seconds")
 	}
-	
+
 	if !ran {
 		t.Fatal("Job ran flag not set")
 	}
@@ -249,11 +249,11 @@ func TestCron_ConcurrentAdd(t *testing.T) {
 	c := NewCron()
 	c.Start()
 	defer c.Stop()
-	
+
 	const numJobs = 50
 	var addWg sync.WaitGroup
 	addWg.Add(numJobs)
-	
+
 	for i := 0; i < numJobs; i++ {
 		go func(i int) {
 			defer addWg.Done()
@@ -266,11 +266,11 @@ func TestCron_ConcurrentAdd(t *testing.T) {
 		}(i)
 	}
 	addWg.Wait()
-	
+
 	c.mu.RLock()
 	count := len(c.jobs)
 	c.mu.RUnlock()
-	
+
 	if count != numJobs {
 		t.Errorf("Expected %d jobs, got %d", numJobs, count)
 	}
@@ -279,43 +279,43 @@ func TestCron_ConcurrentAdd(t *testing.T) {
 func TestCron_GracefulShutdown(t *testing.T) {
 	c := NewCron()
 	c.Start()
-	
+
 	var wg sync.WaitGroup
 	wg.Add(1)
-	
+
 	running := make(chan struct{})
 	var runOnce sync.Once
-	
+
 	c.AddJob("* * * * * *", func() {
 		runOnce.Do(func() {
-			close(running) // Signal started
+			close(running)                     // Signal started
 			time.Sleep(500 * time.Millisecond) // Simulate work
 			wg.Done()
 		})
 	})
-	
+
 	// Wait until job starts
 	select {
 	case <-running:
 	case <-time.After(2 * time.Second):
 		t.Fatal("Job didn't start")
 	}
-	
+
 	startStop := time.Now()
 	c.Stop() // Should wait for job
 	elapsed := time.Since(startStop)
-	
+
 	if elapsed < 500*time.Millisecond {
 		t.Errorf("Stop returned too early, took %v, expected > 500ms", elapsed)
 	}
-	
+
 	// Verify job finished
 	done := make(chan struct{})
 	go func() {
 		wg.Wait()
 		close(done)
 	}()
-	
+
 	select {
 	case <-done:
 	case <-time.After(100 * time.Millisecond):
@@ -327,16 +327,16 @@ func TestCron_Precision(t *testing.T) {
 	c := NewCron()
 	c.Start()
 	defer c.Stop()
-	
+
 	var wg sync.WaitGroup
 	wg.Add(1)
-	
+
 	var runTime time.Time
 	var runOnce sync.Once
-	
+
 	// Schedule for next second
 	// Actually, just "* * * * * *" will fire at next second boundary.
-	
+
 	_, err := c.AddJob("* * * * * *", func() {
 		runOnce.Do(func() {
 			runTime = time.Now()
@@ -346,13 +346,13 @@ func TestCron_Precision(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	
+
 	done := make(chan struct{})
 	go func() {
 		wg.Wait()
 		close(done)
 	}()
-	
+
 	select {
 	case <-done:
 		// Calculate deviation from expected second boundary
@@ -366,16 +366,16 @@ func TestCron_Precision(t *testing.T) {
 			// If it runs at :59.999, ns is huge.
 			// But we expect it to run after.
 		}
-		
+
 		// If ns is large (e.g. 900ms), we might have been late or early.
 		// We expect close to 0.
 		// Let's check deviation from nearest second.
-		
+
 		// Note: If we just verify it's within 20ms of a second boundary.
 		// But which boundary?
 		// We can't easily know exactly which second it picked without calculation.
 		// But we know it should be consistent.
-		
+
 		if ns > 50_000_000 { // 50ms tolerance
 			t.Logf("Precision warning: Job ran at %v (ns: %d), > 50ms deviation", runTime, ns)
 			// Don't fail the test as CI environments can be slow, but log it.
@@ -389,19 +389,19 @@ func TestCron_RemoveJob(t *testing.T) {
 	c := NewCron()
 	c.Start()
 	defer c.Stop()
-	
+
 	var counter int32
-	
+
 	id, _ := c.AddJob("* * * * * *", func() {
 		atomic.AddInt32(&counter, 1)
 	})
-	
+
 	// let it run once? No, remove immediately.
 	c.RemoveJob(id)
-	
+
 	// Wait 2 seconds. Counter should be 0.
 	time.Sleep(2 * time.Second)
-	
+
 	val := atomic.LoadInt32(&counter)
 	if val != 0 {
 		t.Errorf("Job ran %d times after removal (expected 0). (Note: if it ran before removal, this test is flaky, but we removed immediately)", val)
@@ -410,7 +410,7 @@ func TestCron_RemoveJob(t *testing.T) {
 
 func TestCron_ImpossibleDate(t *testing.T) {
 	c := NewCron()
-	
+
 	// Feb 30th
 	// 0 0 0 30 2 *
 	_, err := c.AddJob("0 0 0 30 2 *", func() {})

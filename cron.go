@@ -56,7 +56,6 @@ type Expression struct {
 }
 
 // Job represents a scheduled task.
-// Job represents a scheduled task.
 type Job struct {
 	ID   string
 	Spec string
@@ -343,8 +342,6 @@ func findNextBit(mask uint64, start, min, max int) (int, bool) {
 
 // AddJob adds a new job to the scheduler.
 // Returns the job ID and error if spec is invalid.
-// AddJob adds a new job to the scheduler.
-// Returns the job ID and error if spec is invalid.
 func (c *Cron) AddJob(spec string, cmd func()) (string, error) {
 	return c.AddJobWithOptions(spec, func(ctx context.Context) { cmd() }, JobOptions{Overlap: OverlapAllow})
 }
@@ -475,7 +472,7 @@ func (c *Cron) run() {
 			delay = 100000 * time.Hour // "Infinite" wait
 		} else {
 			nextTime = c.jobList[0].next
-			delay = nextTime.Sub(time.Now())
+			delay = time.Until(nextTime)
 		}
 		c.mu.RUnlock()
 

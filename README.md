@@ -1,7 +1,7 @@
 # CronLib: High-Performance Go Cron Library
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/yourusername/cronlib.svg)](https://pkg.go.dev/github.com/yourusername/cronlib)
-[![Go Report Card](https://goreportcard.com/badge/github.com/yourusername/cronlib)](https://goreportcard.com/report/github.com/yourusername/cronlib)
+[![Go Reference](https://pkg.go.dev/badge/github.com/raythurman2386/cronlib.svg)](https://pkg.go.dev/github.com/raythurman2386/cronlib)
+[![Go Report Card](https://goreportcard.com/badge/github.com/raythurman2386/cronlib)](https://goreportcard.com/report/github.com/raythurman2386/cronlib)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **CronLib** is a lightweight, thread-safe, and high-performance cron scheduling library for Go. It is designed to handle thousands of concurrent jobs with sub-millisecond precision, mirroring `node-cron` functionality but optimized for the Go ecosystem.
@@ -19,7 +19,7 @@
 ## Installation
 
 ```bash
-go get github.com/yourusername/cronlib
+go get github.com/raythurman2386/cronlib
 ```
 
 ## Quick Start
@@ -30,7 +30,7 @@ package main
 import (
 	"fmt"
 	"time"
-	"cronlib"
+	"github.com/raythurman2386/cronlib"
 )
 
 func main() {
@@ -68,7 +68,7 @@ c.AddJobWithOptions("*/10 * * * * *", myTask, cronlib.JobOptions{
 Track job history and recover schedules across restarts.
 
 ```go
-import "cronlib/store/sqlite"
+import "github.com/raythurman2386/cronlib/store/sqlite"
 
 store, _ := sqlite.New("cron.db")
 c.SetJobStore(store)
@@ -78,7 +78,7 @@ c.SetJobStore(store)
 Ensure a job runs only once across a cluster.
 
 ```go
-import "cronlib/lock/redis"
+import "github.com/raythurman2386/cronlib/lock/redis"
 
 lock := redis.New("localhost:6379")
 c.SetDistLock(lock)
@@ -88,7 +88,7 @@ c.SetDistLock(lock)
 Embedded UI accessible at `http://localhost:8080`.
 
 ```go
-import "cronlib/dashboard"
+import "github.com/raythurman2386/cronlib/dashboard"
 
 http.Handle("/", dashboard.NewHandler(c))
 http.ListenAndServe(":8080", nil)

@@ -1,4 +1,4 @@
-module cronlib
+module github.com/raythurman2386/cronlib
 
 go 1.24.3
 

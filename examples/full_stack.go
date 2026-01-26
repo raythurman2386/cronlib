@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"cronlib"
-	"cronlib/dashboard"
-	"cronlib/lock/redis"
-	"cronlib/store/sqlite"
+	"github.com/raythurman2386/cronlib"
+	"github.com/raythurman2386/cronlib/dashboard"
+	"github.com/raythurman2386/cronlib/lock/redis"
+	"github.com/raythurman2386/cronlib/store/sqlite"
 )
 
 func main() {

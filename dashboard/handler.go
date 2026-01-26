@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"text/template"
 
-	"cronlib"
+	"github.com/raythurman2386/cronlib"
 )
 
 // Handler serves the dashboard.
