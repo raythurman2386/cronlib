@@ -1,10 +1,10 @@
 module github.com/raythurman2386/cronlib
 
-go 1.24.3
+go 1.25.2
 
 require (
 	github.com/mattn/go-sqlite3 v1.14.33
-	github.com/redis/go-redis/v9 v9.17.2
+	github.com/redis/go-redis/v9 v9.17.3
 )
 
 require (

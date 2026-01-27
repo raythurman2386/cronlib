@@ -101,6 +101,21 @@ The Web Dashboard provides a live view of:
 - **Last Execution Time**
 - **Real-time Status** (Running/Idle)
 
+## Examples
+
+Explore more realistic implementation patterns in the `examples/` directory:
+
+- 🚀 **[IoT Ingestion](./examples/iot/main.go)**: High-frequency polling with sub-millisecond precision monitoring.
+- 🔒 **[Distributed Singleton](./examples/distributed/main.go)**: Cluster-wide job synchronization using Redis locks.
+- 💾 **[Persistent Recovery](./examples/persistence/main.go)**: Resuming schedules and tracking history using SQLite.
+- ⚙️ **[Overlap Control](./examples/overlap/main.go)**: Demonstrating `Forbid` and `Replace` policies for slow tasks.
+- 🌐 **[Full Stack](./examples/fullstack/main.go)**: A complete implementation featuring the dashboard, persistence, and locking.
+
+You can run any example using:
+```bash
+go run examples/iot/main.go
+```
+
 ## License
 
 MIT
