@@ -7,13 +7,24 @@ This document outlines the development plan to bring `cronlib` to feature parity
 ### 1.1 Panic Recovery
 **Goal:** Ensure that a panic in a single job does not crash the entire scheduler or the application.
 **Tasks:**
-- [ ] Implement a recovery mechanism within the job execution goroutine in `cron.go`.
-- [ ] Log the panic stack trace to the existing logging interface (or `stderr` if generic).
-- [ ] Add a unit test that intentionally panics a job and verifies the scheduler continues running.
+- [x] Implement a recovery mechanism within the job execution goroutine in `cron.go`.
+- [x] Log the panic stack trace to the existing logging interface (or `stderr` if generic).
+- [x] Add a unit test that intentionally panics a job and verifies the scheduler continues running.
 
-## Phase 2: Enhanced Usability (Macros)
+## Phase 2: Globalization (Timezones)
 
-### 2.1 Standard Cron Macros
+### 2.1 Per-Job Timezone Support
+**Goal:** Allow jobs to be scheduled in specific timezones, independent of the server's system time.
+**Tasks:**
+- [x] Add `Location *time.Location` field to the `Job` struct.
+- [x] Add `WithLocation(loc *time.Location)` option to `JobOptions`.
+- [x] Update `Expression.Next(from time.Time)` to perform calculations relative to the target timezone.
+- [ ] Add support for `CRON_TZ=America/New_York ...` prefix in the spec string (optional but recommended for compatibility).
+- [x] Add tests verifying daylight saving time transitions handle correctly.
+
+## Phase 3: Enhanced Usability (Macros)
+
+### 3.1 Standard Cron Macros
 **Goal:** Support common aliases for standard schedules.
 **Tasks:**
 - [ ] Update `Parse()` in `cron.go` to handle single-token inputs.
@@ -25,7 +36,7 @@ This document outlines the development plan to bring `cronlib` to feature parity
     - `@hourly` -> `0 0 * * * *`
 - [ ] Update tests to verify macro expansion.
 
-### 2.2 The `@every` Syntax
+### 3.2 The `@every` Syntax
 **Goal:** Allow simple duration-based schedules (e.g., `@every 1h30m`).
 **Tasks:**
 - [ ] Update `Parse()` to detect the `@every` prefix.
@@ -33,18 +44,6 @@ This document outlines the development plan to bring `cronlib` to feature parity
 - [ ] Create a mechanism to represent fixed-interval schedules (which may differ slightly from strict cron bitmask alignment, or calculate the equivalent bitmask if possible).
     - *Note:* `robfig/cron` treats `@every` as a fixed delay from the start time, whereas standard cron aligns to the clock. We should decide on the behavior (likely fixed delay wrapper or simple clock alignment).
 - [ ] Add tests for various duration formats.
-
-## Phase 3: Globalization (Timezones)
-
-### 3.1 Per-Job Timezone Support
-**Goal:** Allow jobs to be scheduled in specific timezones, independent of the server's system time.
-**Tasks:**
-- [ ] Add `Location *time.Location` field to the `Job` struct.
-- [ ] Add `WithLocation(loc *time.Location)` option to `JobOptions`.
-- [ ] Update `Expression.Next(from time.Time)` to perform calculations relative to the target timezone.
-    - *Logic:* `t = t.In(loc)` before calculating next run, then convert back or keep consistent.
-- [ ] Add support for `CRON_TZ=America/New_York ...` prefix in the spec string (optional but recommended for compatibility).
-- [ ] Add tests verifying daylight saving time transitions handle correctly.
 
 ## Phase 4: Extensibility (Middleware)
 

@@ -39,7 +39,8 @@ const (
 
 // JobOptions configuration for a job.
 type JobOptions struct {
-	Overlap OverlapPolicy
+	Overlap  OverlapPolicy
+	Location *time.Location
 }
 
 // Expression represents the parsed cron expression using bitmasks.
@@ -67,6 +68,7 @@ type Job struct {
 	running bool
 	cancel  context.CancelFunc
 	opts    JobOptions
+	loc     *time.Location
 }
 
 // Cron is the main scheduler engine.
@@ -359,12 +361,17 @@ func (c *Cron) AddJobWithOptions(spec string, cmd func(context.Context), opts Jo
 	c.idCtr++
 	id := strconv.Itoa(c.idCtr)
 
+	loc := opts.Location
+	if loc == nil {
+		loc = time.Local
+	}
+
 	// Check store for last run
 	var lastRun time.Time
 	if c.store != nil {
 		lr, err := c.store.GetLastRun(id)
 		if err == nil && !lr.IsZero() {
-			lastRun = lr
+			lastRun = lr.In(loc)
 		}
 	}
 
@@ -372,7 +379,7 @@ func (c *Cron) AddJobWithOptions(spec string, cmd func(context.Context), opts Jo
 	if !lastRun.IsZero() {
 		next = expr.Next(lastRun)
 	} else {
-		next = expr.Next(time.Now())
+		next = expr.Next(time.Now().In(loc))
 	}
 
 	if next.IsZero() {
@@ -386,6 +393,7 @@ func (c *Cron) AddJobWithOptions(spec string, cmd func(context.Context), opts Jo
 		Cmd:  cmd,
 		next: next,
 		opts: opts,
+		loc:  loc,
 	}
 
 	c.jobs[id] = job
@@ -581,7 +589,7 @@ func (c *Cron) run() {
 
 			AdvanceJob:
 				// Calculate next run
-				next := job.Expr.Next(now)
+				next := job.Expr.Next(now.In(job.loc))
 				if next.IsZero() {
 					delete(c.jobs, job.ID)
 					c.jobList[0] = nil
