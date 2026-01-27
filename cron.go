@@ -41,12 +41,14 @@ const (
 type JobOptions struct {
 	Overlap  OverlapPolicy
 	Location *time.Location
+	Wrappers []JobWrapper
 }
 
 // Expression represents the parsed cron expression using bitmasks.
 type Expression struct {
-	second uint64
-	minute uint64
+	interval time.Duration // For @every schedules
+	second   uint64
+	minute   uint64
 	hour   uint64
 	dom    uint64
 	month  uint64
@@ -61,7 +63,7 @@ type Job struct {
 	ID   string
 	Spec string
 	Expr Expression
-	Cmd  func(context.Context)
+	Cmd  func(context.Context) error
 	next time.Time
 
 	mu      sync.Mutex
@@ -110,9 +112,39 @@ func (c *Cron) SetDistLock(l DistLock) {
 	c.lock = l
 }
 
-// Parse parses a 6-field cron string into an Expression.
+// Parse parses a 6-field cron string or a macro into an Expression.
 // Format: second minute hour day-of-month month day-of-week
 func Parse(spec string) (Expression, error) {
+	if strings.HasPrefix(spec, "@every ") {
+		durationStr := strings.TrimPrefix(spec, "@every ")
+		duration, err := time.ParseDuration(durationStr)
+		if err != nil {
+			return Expression{}, fmt.Errorf("invalid duration for @every: %w", err)
+		}
+		return Expression{interval: duration}, nil
+	}
+
+	if strings.HasPrefix(spec, "@") {
+		switch spec {
+		case "@yearly", "@annually":
+			spec = "0 0 0 1 1 *"
+		case "@monthly":
+			spec = "0 0 0 1 * *"
+		case "@bi-monthly":
+			spec = "0 0 0 1 */2 *"
+		case "@weekly":
+			spec = "0 0 0 * * 0"
+		case "@bi-weekly":
+			spec = "0 0 0 * * 0/2"
+		case "@daily", "@midnight":
+			spec = "0 0 0 * * *"
+		case "@bi-daily":
+			spec = "0 0 0 */2 * *"
+		case "@hourly":
+			spec = "0 0 * * * *"
+		}
+	}
+
 	fields := strings.Fields(spec)
 	if len(fields) != 6 {
 		return Expression{}, fmt.Errorf("expected 6 fields, found %d: %s", len(fields), spec)
@@ -239,6 +271,11 @@ func parseField(field string, min, max int) (uint64, bool, error) {
 // Next returns the next execution time after `from`.
 // Returns zero time if no match found within 5 years.
 func (e Expression) Next(from time.Time) time.Time {
+	// Handle fixed interval schedules (@every)
+	if e.interval > 0 {
+		return from.Add(e.interval)
+	}
+
 	// Start checking from the next second
 	t := from.Add(1 * time.Second)
 	// Strip nanoseconds
@@ -386,11 +423,42 @@ func (c *Cron) AddJobWithOptions(spec string, cmd func(context.Context), opts Jo
 		return "", fmt.Errorf("impossible schedule")
 	}
 
+	// Adapt user cmd and apply wrappers
+	baseCmd := func(ctx context.Context) error {
+		cmd(ctx)
+		return nil
+	}
+
+	// Order: Recover -> Lock -> Log -> User
+	// Wait, Recover should be outer-most to catch panics in Lock/Log too?
+	// Lock should be outer to avoid running if locked.
+	// Log should wrap user cmd.
+	// Actually:
+	// Recover (outermost)
+	// Lock (if locked, stop)
+	// Log (records execution)
+	// User
+	
+	// Chain executes: Wrapper1(Wrapper2(User))
+	// So Wrapper1 is outer-most.
+	wrappers := []JobWrapper{
+		Recover(),
+		c.lockWrapper(id),
+		c.logWrapper(id),
+	}
+	
+	// Add user wrappers (inner-most, closest to user cmd)
+	// But before the baseCmd.
+	// Order: Recover -> Lock -> Log -> UserWrappers -> UserCmd
+	wrappers = append(wrappers, opts.Wrappers...)
+	
+	finalCmd := Chain(wrappers...)(baseCmd)
+
 	job := &Job{
 		ID:   id,
 		Spec: spec,
 		Expr: expr,
-		Cmd:  cmd,
+		Cmd:  finalCmd,
 		next: next,
 		opts: opts,
 		loc:  loc,
@@ -538,17 +606,6 @@ func (c *Cron) run() {
 				go func(j *Job) {
 					defer c.wg.Done()
 
-					// Distributed Lock
-					if c.lock != nil {
-						// 1 minute TTL for now
-						locked, err := c.lock.Lock(context.Background(), "cron:"+j.ID, time.Minute)
-						if err != nil || !locked {
-							// Failed to acquire lock, skip execution
-							return
-						}
-						defer c.lock.Unlock(context.Background(), "cron:"+j.ID)
-					}
-
 					// Mark running
 					j.mu.Lock()
 					j.running = true
@@ -556,35 +613,16 @@ func (c *Cron) run() {
 					j.cancel = cancel
 					j.mu.Unlock()
 
-					start := time.Now()
-					var err error
-					defer func() {
-						if r := recover(); r != nil {
-							err = fmt.Errorf("panic: %v", r)
-						}
-						end := time.Now()
-						j.mu.Lock()
-						j.running = false
-						if j.cancel != nil {
-							j.cancel() // Ensure cleanup
-							j.cancel = nil
-						}
-						j.mu.Unlock()
+					// Execute wrapped command
+					_ = j.Cmd(ctx)
 
-						// Log execution
-						if c.store != nil {
-							success := err == nil
-							msg := ""
-							if err != nil {
-								msg = err.Error()
-							}
-							c.store.LogExecution(j.ID, start, end, success, msg)
-							c.store.SetLastRun(j.ID, start)
-						}
-					}()
-
-					// Catch panics? Ideally yes, but keeping it simple for now
-					j.Cmd(ctx)
+					j.mu.Lock()
+					j.running = false
+					if j.cancel != nil {
+						j.cancel() // Ensure cleanup
+						j.cancel = nil
+					}
+					j.mu.Unlock()
 				}(job)
 
 			AdvanceJob:

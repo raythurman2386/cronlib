@@ -46,6 +46,25 @@ func main() {
 }
 ```
 
+## Cron Syntax & Macros
+
+CronLib supports standard 6-field cron syntax (sec, min, hour, dom, month, dow) and convenient macros:
+
+*   `@yearly`, `@annually`: Run once a year.
+*   `@monthly`: Run once a month.
+*   `@weekly`: Run once a week.
+*   `@daily`, `@midnight`: Run once a day.
+*   `@hourly`: Run once an hour.
+
+### The `@every` Syntax
+For simple fixed-interval schedules, use `@every`:
+```go
+// Runs every 1 hour and 30 minutes
+c.AddJob("@every 1h30m", func() {
+    fmt.Println("Tick")
+})
+```
+
 ## Concurrency Control (Overlap Policies)
 
 CronLib provides fine-grained control over how jobs behave when a new execution is scheduled while a previous instance is still running.
@@ -59,6 +78,24 @@ CronLib provides fine-grained control over how jobs behave when a new execution 
 ```go
 c.AddJobWithOptions("*/10 * * * * *", myTask, cronlib.JobOptions{
     Overlap: cronlib.OverlapReplace,
+})
+```
+
+## Middleware (Job Wrappers)
+
+You can extend job behavior using composable wrappers. CronLib applies `Recover`, `Lock` (if configured), and `Log` (if configured) by default, but you can add custom logic.
+
+**Standard Wrappers:**
+*   `Recover()`: Catches panics and prevents the scheduler from crashing.
+*   `DelayIfStillRunning()`: Queues execution if the previous run hasn't finished (ensures sequential execution).
+*   `SkipIfStillRunning()`: Skips execution if busy (alternative to `OverlapForbid`).
+
+```go
+c.AddJobWithOptions("@every 1s", myTask, cronlib.JobOptions{
+    Wrappers: []cronlib.JobWrapper{
+        cronlib.DelayIfStillRunning(),
+        MyCustomMetricsWrapper(),
+    },
 })
 ```
 

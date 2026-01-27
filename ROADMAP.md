@@ -27,38 +27,39 @@ This document outlines the development plan to bring `cronlib` to feature parity
 ### 3.1 Standard Cron Macros
 **Goal:** Support common aliases for standard schedules.
 **Tasks:**
-- [ ] Update `Parse()` in `cron.go` to handle single-token inputs.
-- [ ] Implement mappings for:
+- [x] Update `Parse()` in `cron.go` to handle single-token inputs.
+- [x] Implement mappings for:
     - `@yearly` / `@annually` -> `0 0 0 1 1 *`
     - `@monthly` -> `0 0 0 1 * *`
     - `@weekly` -> `0 0 0 * * 0`
     - `@daily` / `@midnight` -> `0 0 0 * * *`
     - `@hourly` -> `0 0 * * * *`
-- [ ] Update tests to verify macro expansion.
+- [x] Implement bi-options (`@bi-weekly`, `@bi-monthly`, etc.)
+- [x] Update tests to verify macro expansion.
 
 ### 3.2 The `@every` Syntax
 **Goal:** Allow simple duration-based schedules (e.g., `@every 1h30m`).
 **Tasks:**
-- [ ] Update `Parse()` to detect the `@every` prefix.
-- [ ] Parse the subsequent duration string using `time.ParseDuration`.
-- [ ] Create a mechanism to represent fixed-interval schedules (which may differ slightly from strict cron bitmask alignment, or calculate the equivalent bitmask if possible).
-    - *Note:* `robfig/cron` treats `@every` as a fixed delay from the start time, whereas standard cron aligns to the clock. We should decide on the behavior (likely fixed delay wrapper or simple clock alignment).
-- [ ] Add tests for various duration formats.
+- [x] Update `Parse()` to detect the `@every` prefix.
+- [x] Parse the subsequent duration string using `time.ParseDuration`.
+- [x] Create a mechanism to represent fixed-interval schedules (implemented via `Expression.interval` field).
+    - *Note:* `robfig/cron` treats `@every` as a fixed delay from the start time, whereas standard cron aligns to the clock. We implemented fixed delay from start/last run.
+- [x] Add tests for various duration formats.
 
 ## Phase 4: Extensibility (Middleware)
 
 ### 4.1 Job Wrappers / Interceptors
 **Goal:** Refactor hardcoded logging, locking, and recovery into a composable middleware system.
 **Tasks:**
-- [ ] Define a `JobWrapper` type (function that takes a `Job` and returns a `Job` or modifies its `Cmd`).
-- [ ] Implement standard wrappers:
+- [x] Define a `JobWrapper` type (function that takes a `Job` and returns a `Job` or modifies its `Cmd`).
+- [x] Implement standard wrappers:
     - `Recover()`: The logic from Phase 1.
-    - `SkipIfStillRunning()`: The logic currently in `OverlapForbid`.
+    - `SkipIfStillRunning()`: Implemented as a wrapper (alternative to OverlapForbid).
     - `DelayIfStillRunning()`: Queuing logic.
-- [ ] Refactor `Cron.run` to apply these wrappers during job addition or execution, rather than having monolithic logic in the run loop.
-- [ ] Allow users to inject custom wrappers (e.g., for Prometheus metrics or OpenTelemetry tracing).
+- [x] Refactor `Cron.run` to apply these wrappers during job addition or execution, rather than having monolithic logic in the run loop.
+- [x] Allow users to inject custom wrappers (e.g., for Prometheus metrics or OpenTelemetry tracing).
 
 ## Phase 5: Documentation & Cleanup
-- [ ] Update `README.md` with new features and examples.
-- [ ] Clean up `TODO` comments in the code.
+- [x] Update `README.md` with new features and examples.
+- [x] Clean up `TODO` comments in the code.
 - [ ] ensure `go doc` is clean and descriptive.
