@@ -551,6 +551,9 @@ func (c *Cron) run() {
 					start := time.Now()
 					var err error
 					defer func() {
+						if r := recover(); r != nil {
+							err = fmt.Errorf("panic: %v", r)
+						}
 						end := time.Now()
 						j.mu.Lock()
 						j.running = false
