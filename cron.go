@@ -49,10 +49,10 @@ type Expression struct {
 	interval time.Duration // For @every schedules
 	second   uint64
 	minute   uint64
-	hour   uint64
-	dom    uint64
-	month  uint64
-	dow    uint64
+	hour     uint64
+	dom      uint64
+	month    uint64
+	dow      uint64
 	// Flags for standard cron behavior
 	domStar bool
 	dowStar bool
@@ -74,6 +74,8 @@ type Job struct {
 }
 
 // Cron is the main scheduler engine.
+// It manages a list of jobs and executes them according to their schedule.
+// Methods on Cron are thread-safe.
 type Cron struct {
 	mu      sync.RWMutex
 	jobs    map[string]*Job
@@ -113,7 +115,19 @@ func (c *Cron) SetDistLock(l DistLock) {
 }
 
 // Parse parses a 6-field cron string or a macro into an Expression.
-// Format: second minute hour day-of-month month day-of-week
+//
+// The standard format is:
+//
+//	second minute hour day-of-month month day-of-week
+//
+// Supported macros:
+//
+//	@yearly, @annually (0 0 0 1 1 *)
+//	@monthly           (0 0 0 1 * *)
+//	@weekly            (0 0 0 * * 0)
+//	@daily, @midnight  (0 0 0 * * *)
+//	@hourly            (0 0 * * * *)
+//	@every <duration>  (e.g., "@every 1h30m")
 func Parse(spec string) (Expression, error) {
 	if strings.HasPrefix(spec, "@every ") {
 		durationStr := strings.TrimPrefix(spec, "@every ")
@@ -438,7 +452,7 @@ func (c *Cron) AddJobWithOptions(spec string, cmd func(context.Context), opts Jo
 	// Lock (if locked, stop)
 	// Log (records execution)
 	// User
-	
+
 	// Chain executes: Wrapper1(Wrapper2(User))
 	// So Wrapper1 is outer-most.
 	wrappers := []JobWrapper{
@@ -446,12 +460,12 @@ func (c *Cron) AddJobWithOptions(spec string, cmd func(context.Context), opts Jo
 		c.lockWrapper(id),
 		c.logWrapper(id),
 	}
-	
+
 	// Add user wrappers (inner-most, closest to user cmd)
 	// But before the baseCmd.
 	// Order: Recover -> Lock -> Log -> UserWrappers -> UserCmd
 	wrappers = append(wrappers, opts.Wrappers...)
-	
+
 	finalCmd := Chain(wrappers...)(baseCmd)
 
 	job := &Job{
@@ -523,7 +537,9 @@ func (c *Cron) Start() {
 	go c.run()
 }
 
-// Stop stops the scheduler and waits for running jobs to finish.
+// Stop stops the scheduler.
+// It waits for all currently running jobs to complete before returning.
+// Using this ensures a graceful shutdown.
 func (c *Cron) Stop() {
 	c.mu.Lock()
 	if !c.running {

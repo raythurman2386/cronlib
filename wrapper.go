@@ -8,9 +8,12 @@ import (
 )
 
 // JobWrapper decorates a job execution function.
+// It allows injecting custom logic before and after the job runs (middleware).
 type JobWrapper func(func(context.Context) error) func(context.Context) error
 
 // Chain combines multiple job wrappers into a single wrapper.
+// Wrappers are executed in the order they are passed.
+// Example: Chain(W1, W2) results in W1(W2(Job)).
 func Chain(wrappers ...JobWrapper) JobWrapper {
 	return func(next func(context.Context) error) func(context.Context) error {
 		for i := len(wrappers) - 1; i >= 0; i-- {
@@ -46,16 +49,16 @@ func (c *Cron) logWrapper(jobID string) JobWrapper {
 				return next(ctx)
 			}
 			start := time.Now()
-			
+
 			err := next(ctx)
-			
+
 			end := time.Now()
 			success := err == nil
 			msg := ""
 			if err != nil {
 				msg = err.Error()
 			}
-			
+
 			_ = store.LogExecution(jobID, start, end, success, msg)
 			_ = store.SetLastRun(jobID, start)
 
@@ -82,7 +85,7 @@ func (c *Cron) lockWrapper(jobID string) JobWrapper {
 				// Failed to acquire lock, skip execution
 				return nil // Return nil or specific error? skipping is "success" in terms of "no crash"
 			}
-			defer lock.Unlock(ctx, "cron:"+jobID)
+			defer func() { _ = lock.Unlock(ctx, "cron:"+jobID) }()
 
 			return next(ctx)
 		}

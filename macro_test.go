@@ -28,15 +28,15 @@ func TestMacroParsing(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to parse macro %s: %v", tt.macro, err)
 			}
-			
+
 			// To verify, we'll parse the expected string and compare bitmasks
 			expectedExpr, _ := Parse(tt.expected)
-			if expr.second != expectedExpr.second || 
-			   expr.minute != expectedExpr.minute ||
-			   expr.hour != expectedExpr.hour ||
-			   expr.dom != expectedExpr.dom ||
-			   expr.month != expectedExpr.month ||
-			   expr.dow != expectedExpr.dow {
+			if expr.second != expectedExpr.second ||
+				expr.minute != expectedExpr.minute ||
+				expr.hour != expectedExpr.hour ||
+				expr.dom != expectedExpr.dom ||
+				expr.month != expectedExpr.month ||
+				expr.dow != expectedExpr.dow {
 				t.Errorf("Macro %s expanded incorrectly.\nGot:  %+v\nWant: %+v", tt.macro, expr, expectedExpr)
 			}
 		})

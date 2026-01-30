@@ -39,12 +39,12 @@ func TestDelayIfStillRunning(t *testing.T) {
 	// `JobWrapper` is `func(next) next`.
 	// The closure `var mu sync.Mutex` is created when `DelayIfStillRunning()` is called.
 	// If I pass `wrapper` (the result of `DelayIfStillRunning()`) to `AddJob`, then yes, it shares the mutex.
-	
+
 	// However, `AddJob` applies the wrapper chain: `Chain(wrappers...)(baseCmd)`.
 	// `Chain` calls `wrappers[i](next)`.
 	// If `wrapper` captures `mu`, then every time `wrapper(next)` is called, it returns a function that uses `mu`.
 	// Yes.
-	
+
 	// BUT, `AddJob` is called ONCE per job definition.
 	// The `finalCmd` is stored in `job.Cmd`.
 	// So `job.Cmd` is the one holding the mutex.
@@ -54,40 +54,40 @@ func TestDelayIfStillRunning(t *testing.T) {
 	// The `Chain` builds the function once.
 	// So subsequent calls to `job.Cmd` share the closure environment.
 	// So `DelayIfStillRunning` works correctly for a SINGLE job instance running multiple times.
-	
+
 	// Testing logic:
 	// We need to simulate calling the wrapped function concurrently.
-	
+
 	wrappedJob := wrapper(jobFunc(1))
-	
+
 	var wg sync.WaitGroup
 	wg.Add(2)
-	
+
 	go func() {
 		defer wg.Done()
-		wrappedJob(context.Background())
+		_ = wrappedJob(context.Background())
 	}()
-	
+
 	time.Sleep(20 * time.Millisecond) // Ensure first starts
-	
+
 	go func() {
 		defer wg.Done()
-		wrappedJob(context.Background())
+		_ = wrappedJob(context.Background())
 	}()
-	
+
 	wg.Wait()
-	
+
 	// Verify order: start 1, end 1, start 1, end 1 (or 1 then 2 if we passed different IDs but same wrapper)
 	// Here we called `wrappedJob` twice.
-	
+
 	if len(events) != 4 {
 		t.Fatalf("Expected 4 events, got %d", len(events))
 	}
-	
+
 	// Expected: start, end, start, end.
 	// If parallel: start, start, end, end (or mixed).
 	// Because of sleep, if parallel, we'd see start, start.
-	
+
 	if events[0] != "start 1" {
 		t.Errorf("Event 0 expected start 1, got %s", events[0])
 	}
@@ -104,18 +104,18 @@ func TestDelayIfStillRunning(t *testing.T) {
 
 func TestRecoverWrapper(t *testing.T) {
 	wrapper := Recover()
-	
+
 	panickyJob := func(ctx context.Context) error {
 		panic("oops")
 	}
-	
+
 	wrapped := wrapper(panickyJob)
-	
+
 	err := wrapped(context.Background())
 	if err == nil {
 		t.Error("Expected error from panic, got nil")
 	}
-	
+
 	if err.Error() != "panic: oops" {
 		t.Errorf("Expected 'panic: oops', got '%v'", err)
 	}
