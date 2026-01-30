@@ -1,3 +1,4 @@
+// Package sqlite provides a cronlib.JobStore implementation using SQLite.
 package sqlite
 
 import (
@@ -21,7 +22,7 @@ func New(path string) (*Store, error) {
 
 	s := &Store{db: db}
 	if err := s.init(); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 	return s, nil
@@ -46,6 +47,7 @@ func (s *Store) init() error {
 	return err
 }
 
+// GetLastRun retrieves the last execution time for a job.
 func (s *Store) GetLastRun(jobID string) (time.Time, error) {
 	var t time.Time
 	err := s.db.QueryRow("SELECT last_run FROM cron_job_state WHERE id = ?", jobID).Scan(&t)
@@ -55,17 +57,20 @@ func (s *Store) GetLastRun(jobID string) (time.Time, error) {
 	return t, err
 }
 
+// SetLastRun updates the last execution time for a job.
 func (s *Store) SetLastRun(jobID string, t time.Time) error {
 	_, err := s.db.Exec("INSERT OR REPLACE INTO cron_job_state (id, last_run) VALUES (?, ?)", jobID, t)
 	return err
 }
 
+// LogExecution records a job execution in the history log.
 func (s *Store) LogExecution(jobID string, start, end time.Time, success bool, out string) error {
 	_, err := s.db.Exec("INSERT INTO cron_job_log (job_id, start_time, end_time, success, output) VALUES (?, ?, ?, ?, ?)",
 		jobID, start, end, success, out)
 	return err
 }
 
+// Close closes the database connection.
 func (s *Store) Close() error {
 	return s.db.Close()
 }

@@ -14,6 +14,12 @@
 *   💾 **Persistence**: Native SQLite support to track last run times and execution history.
 *   🌐 **Distributed Locks**: Redis integration for cluster-wide job synchronization.
 *   🖥️ **Web Dashboard**: Built-in UI to monitor job status and execution logs in real-time.
+*   🕒 **Timezone Support**: Full support for job-specific execution locations.
+
+## Requirements
+
+*   **Go**: 1.25 or higher.
+*   **Targeting**: Built for high-performance and modern Go concurrency patterns.
 
 ## Installation
 

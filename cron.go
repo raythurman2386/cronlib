@@ -319,17 +319,18 @@ func (e Expression) Next(from time.Time) time.Time {
 		// If neither DOM nor DOW is *, match if EITHER matches.
 		// If one is *, match if the OTHER matches.
 		// (If both are *, it matches every day).
-		domMatch := (1<<uint(t.Day()))&e.dom != 0
-		dowMatch := (1<<uint(t.Weekday()))&e.dow != 0
+		domMatch := (1<<uint(t.Day()))&e.dom != 0     // #nosec G115
+		dowMatch := (1<<uint(t.Weekday()))&e.dow != 0 // #nosec G115
 
 		dayMatched := false
-		if !e.domStar && !e.dowStar {
+		switch {
+		case !e.domStar && !e.dowStar:
 			dayMatched = domMatch || dowMatch
-		} else if e.domStar {
+		case e.domStar:
 			dayMatched = dowMatch
-		} else if e.dowStar {
+		case e.dowStar:
 			dayMatched = domMatch
-		} else {
+		default:
 			dayMatched = true
 		}
 
@@ -340,6 +341,7 @@ func (e Expression) Next(from time.Time) time.Time {
 		}
 
 		// 3. Hour
+		// #nosec G115
 		if (1<<uint(t.Hour()))&e.hour == 0 {
 			nextHour, ok := findNextBit(e.hour, t.Hour()+1, 0, 23)
 			if ok {
@@ -352,6 +354,7 @@ func (e Expression) Next(from time.Time) time.Time {
 		}
 
 		// 4. Minute
+		// #nosec G115
 		if (1<<uint(t.Minute()))&e.minute == 0 {
 			nextMinute, ok := findNextBit(e.minute, t.Minute()+1, 0, 59)
 			if ok {
@@ -364,6 +367,7 @@ func (e Expression) Next(from time.Time) time.Time {
 		}
 
 		// 5. Second
+		// #nosec G115
 		if (1<<uint(t.Second()))&e.second == 0 {
 			nextSecond, ok := findNextBit(e.second, t.Second()+1, 0, 59)
 			if ok {

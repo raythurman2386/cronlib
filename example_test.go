@@ -69,9 +69,13 @@ func ExampleChain() {
 		Wrappers: []cronlib.JobWrapper{loggingWrapper},
 	}
 
-	c.AddJobWithOptions("@every 1s", func(ctx context.Context) {
+	_, err := c.AddJobWithOptions("@every 1s", func(ctx context.Context) {
 		fmt.Println("Doing work")
 	}, opts)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
 
 	c.Start()
 	// Wait for one run

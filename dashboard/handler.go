@@ -1,3 +1,4 @@
+// Package dashboard provides a simple web UI for monitoring cron jobs.
 package dashboard
 
 import (

@@ -41,7 +41,7 @@ func BenchmarkScheduler_HighLoad(b *testing.B) {
 	c := NewCron()
 	// Add 1000 jobs
 	for i := 0; i < 1000; i++ {
-		c.AddJob("*/1 * * * * *", func() {})
+		_, _ = c.AddJob("*/1 * * * * *", func() {})
 	}
 
 	b.ReportAllocs()
