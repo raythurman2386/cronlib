@@ -1,3 +1,4 @@
+// Package dashboard provides a simple web UI for monitoring cron jobs.
 package dashboard
 
 import (
@@ -97,5 +98,5 @@ func (h *Handler) index(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	t.Execute(w, nil)
+	_ = t.Execute(w, nil)
 }

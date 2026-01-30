@@ -286,13 +286,16 @@ func TestCron_GracefulShutdown(t *testing.T) {
 	running := make(chan struct{})
 	var runOnce sync.Once
 
-	c.AddJob("* * * * * *", func() {
+	_, err := c.AddJob("* * * * * *", func() {
 		runOnce.Do(func() {
 			close(running)                     // Signal started
 			time.Sleep(500 * time.Millisecond) // Simulate work
 			wg.Done()
 		})
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Wait until job starts
 	select {
@@ -361,11 +364,6 @@ func TestCron_Precision(t *testing.T) {
 		// Deviation = (runTime - runTime.Truncate(Second))
 		// Actually runTime.Nanosecond() should be small.
 		ns := runTime.Nanosecond()
-		if ns > 500_000_000 {
-			// It ran closer to next second? No, typically it runs slightly after :00.
-			// If it runs at :59.999, ns is huge.
-			// But we expect it to run after.
-		}
 
 		// If ns is large (e.g. 900ms), we might have been late or early.
 		// We expect close to 0.

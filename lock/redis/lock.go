@@ -1,3 +1,4 @@
+// Package redis provides a cronlib.DistLock implementation using Redis.
 package redis
 
 import (

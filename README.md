@@ -1,7 +1,6 @@
 # CronLib: High-Performance Go Cron Library
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/raythurman2386/cronlib.svg)](https://pkg.go.dev/github.com/raythurman2386/cronlib)
-[![Go Report Card](https://goreportcard.com/badge/github.com/raythurman2386/cronlib)](https://goreportcard.com/report/github.com/raythurman2386/cronlib)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **CronLib** is a lightweight, thread-safe, and high-performance cron scheduling library for Go. It is designed to handle thousands of concurrent jobs with sub-millisecond precision, mirroring `node-cron` functionality but optimized for the Go ecosystem.
@@ -15,6 +14,12 @@
 *   💾 **Persistence**: Native SQLite support to track last run times and execution history.
 *   🌐 **Distributed Locks**: Redis integration for cluster-wide job synchronization.
 *   🖥️ **Web Dashboard**: Built-in UI to monitor job status and execution logs in real-time.
+*   🕒 **Timezone Support**: Full support for job-specific execution locations.
+
+## Requirements
+
+*   **Go**: 1.25 or higher.
+*   **Targeting**: Built for high-performance and modern Go concurrency patterns.
 
 ## Installation
 

@@ -27,7 +27,7 @@ func TestTimezoneSupport(t *testing.T) {
 	}
 
 	spec := "0 0 " + getStr(targetHour) + " * * *"
-	
+
 	// Add job with location
 	id, err := c.AddJobWithOptions(spec, func(ctx context.Context) {}, JobOptions{
 		Location: loc,

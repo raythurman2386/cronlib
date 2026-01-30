@@ -58,7 +58,7 @@ func TestEveryIntegration(t *testing.T) {
 	c := NewCron()
 	var mu sync.Mutex
 	count := 0
-	
+
 	// Run frequently to ensure we catch multiple runs quickly
 	_, err := c.AddJob("@every 100ms", func() {
 		mu.Lock()
