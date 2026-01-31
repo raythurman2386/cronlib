@@ -13,7 +13,7 @@ builds:
   - skip: true
 
 archives:
-  - format: tar.gz
+  - formats: [tar.gz]
     # this name template makes the archive name more standard
     name_template: >-
       {{ .ProjectName }}_{{ .Version }}_source
@@ -22,7 +22,7 @@ checksum:
   name_template: 'checksums.txt'
 
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 
 changelog:
   sort: asc
