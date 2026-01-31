@@ -1,0 +1,41 @@
+# .goreleaser.yaml
+# Complete documentation at https://goreleaser.com
+
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+# Since this is a library, we don't build binaries.
+# We focus on the release notes and source archive.
+builds:
+  - skip: true
+
+archives:
+  - format: tar.gz
+    # this name template makes the archive name more standard
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_source
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - 'merge'
+      - 'Merge'
+
+release:
+  github:
+    owner: raythurman2386
+    name: cronlib
+  # Semantic Versioning is expected
+  mode: replace

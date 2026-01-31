@@ -16,15 +16,26 @@
 *   🖥️ **Web Dashboard**: Built-in UI to monitor job status and execution logs in real-time.
 *   🕒 **Timezone Support**: Full support for job-specific execution locations.
 
+## Versioning
+This project follows [Semantic Versioning 2.0.0](https://semver.org/). 
+
+We use [GoReleaser](https://goreleaser.com/) to automate our release process. Every time a new version tag (e.g., `v0.1.0`) is pushed, a corresponding GitHub Release is created with an automatically generated changelog.
+
 ## Requirements
 
-*   **Go**: 1.25 or higher.
+*   **Go**: 1.25.6 or higher.
 *   **Targeting**: Built for high-performance and modern Go concurrency patterns.
 
 ## Installation
 
+To install the latest version:
 ```bash
 go get github.com/raythurman2386/cronlib
+```
+
+To install a specific version:
+```bash
+go get github.com/raythurman2386/cronlib@v0.1.0
 ```
 
 ## Quick Start
