@@ -23,7 +23,7 @@ We use [GoReleaser](https://goreleaser.com/) to automate our release process. Ev
 
 ## Requirements
 
-*   **Go**: 1.25.6 or higher.
+*   **Go**: 1.24 or higher.
 *   **Targeting**: Built for high-performance and modern Go concurrency patterns.
 
 ## Installation
