@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/raythurman2386/cronlib"
-	"github.com/raythurman2386/cronlib/dashboard"
-	"github.com/raythurman2386/cronlib/lock/redis"
-	"github.com/raythurman2386/cronlib/store/sqlite"
+	"github.com/raythurman2386/cronlib/pkg/dashboard"
+	"github.com/raythurman2386/cronlib/pkg/lock/redis"
+	"github.com/raythurman2386/cronlib/pkg/store/sqlite"
 )
 
 func main() {
