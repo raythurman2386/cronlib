@@ -35,7 +35,7 @@ go get github.com/raythurman2386/cronlib
 
 To install a specific version:
 ```bash
-go get github.com/raythurman2386/cronlib@v0.1.0
+go get github.com/raythurman2386/cronlib@v0.1.2
 ```
 
 ## Quick Start
