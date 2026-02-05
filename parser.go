@@ -198,7 +198,8 @@ func (e Expression) Next(from time.Time) time.Time {
 		}
 
 		// 1. Month
-		if (1<<int(t.Month()))&e.month == 0 {
+		// #nosec G115
+		if (1<<uint(t.Month()))&e.month == 0 {
 			// Find next valid month
 			nextMonth, ok := findNextBit(e.month, int(t.Month())+1, 1, 12)
 			if !ok {
@@ -212,7 +213,9 @@ func (e Expression) Next(from time.Time) time.Time {
 		}
 
 		// 2. Day (DOM/DOW)
+		// #nosec G115
 		domMatch := (1<<uint(t.Day()))&e.dom != 0
+		// #nosec G115
 		dowMatch := (1<<uint(t.Weekday()))&e.dow != 0
 
 		dayMatched := false
@@ -234,6 +237,7 @@ func (e Expression) Next(from time.Time) time.Time {
 		}
 
 		// 3. Hour
+		// #nosec G115
 		if (1<<uint(t.Hour()))&e.hour == 0 {
 			nextHour, ok := findNextBit(e.hour, t.Hour()+1, 0, 23)
 			if ok {
@@ -246,6 +250,7 @@ func (e Expression) Next(from time.Time) time.Time {
 		}
 
 		// 4. Minute
+		// #nosec G115
 		if (1<<uint(t.Minute()))&e.minute == 0 {
 			nextMinute, ok := findNextBit(e.minute, t.Minute()+1, 0, 59)
 			if ok {
@@ -258,6 +263,7 @@ func (e Expression) Next(from time.Time) time.Time {
 		}
 
 		// 5. Second
+		// #nosec G115
 		if (1<<uint(t.Second()))&e.second == 0 {
 			nextSecond, ok := findNextBit(e.second, t.Second()+1, 0, 59)
 			if ok {
