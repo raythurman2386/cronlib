@@ -121,7 +121,7 @@ c.AddJobWithOptions("@every 1s", myTask, cronlib.JobOptions{
 Track job history and recover schedules across restarts.
 
 ```go
-import "github.com/raythurman2386/cronlib/store/sqlite"
+import "github.com/raythurman2386/cronlib/pkg/store/sqlite"
 
 store, _ := sqlite.New("cron.db")
 c.SetJobStore(store)
@@ -131,7 +131,7 @@ c.SetJobStore(store)
 Ensure a job runs only once across a cluster.
 
 ```go
-import "github.com/raythurman2386/cronlib/lock/redis"
+import "github.com/raythurman2386/cronlib/pkg/lock/redis"
 
 lock := redis.New("localhost:6379")
 c.SetDistLock(lock)
@@ -141,7 +141,7 @@ c.SetDistLock(lock)
 Embedded UI accessible at `http://localhost:8080`.
 
 ```go
-import "github.com/raythurman2386/cronlib/dashboard"
+import "github.com/raythurman2386/cronlib/pkg/dashboard"
 
 http.Handle("/", dashboard.NewHandler(c))
 http.ListenAndServe(":8080", nil)

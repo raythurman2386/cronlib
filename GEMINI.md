@@ -14,13 +14,15 @@
 
 ## Key Files & Architecture
 
-*   **`cron.go`**: The core of the library. Contains:
-    *   `Cron`: The main scheduler engine managing the job list and run loop.
-    *   `Job`: Represents a scheduled task with its expression and state.
-    *   `Expression`: The parsed cron schedule using bitmasks.
-    *   `Parse()`: Logic to convert cron strings into `Expression` objects.
-    *   `run()`: The main event loop that waits for the next job or signal.
-*   **`*_test.go`**: Unit tests ensuring correctness of parsing, scheduling, and concurrency.
+*   **`cron.go`**: The core scheduler engine (`Cron` struct).
+*   **`parser.go`**: Logic for parsing cron expressions and calculating next run times (`Expression`, `Parse`).
+*   **`job.go`**: Job-related data structures (`Job`, `JobOptions`, `JobStatus`).
+*   **`interfaces.go`**: Core interfaces (`JobStore`, `DistLock`) and policy definitions.
+*   **`pkg/`**: Auxiliary packages and extensions:
+    *   `pkg/dashboard`: Web UI for monitoring.
+    *   `pkg/store/sqlite`: Persistence implementation.
+    *   `pkg/lock/redis`: Distributed locking implementation.
+*   **`*_test.go`**: Comprehensive unit and integration tests.
 
 ## Building and Running
 
@@ -43,10 +45,5 @@ go test ./... -v
 *   **Language:** Go (1.24+)
 *   **Concurrency:** Heavy reliance on Goroutines, Channels (`stopCh`, `addCh`), `sync.RWMutex` for state protection, and `sync.WaitGroup` for graceful shutdowns.
 *   **Context:** Uses `context.Context` for job cancellation, especially relevant for the `OverlapReplace` policy.
-*   **No External Dependencies:** The project relies solely on the Go standard library.
+*   **No External Dependencies:** The core library relies solely on the Go standard library. External implementations (SQLite, Redis) are in `pkg/`.
 *   **Formatting:** Standard `gofmt` style.
-
-## Future Roadmap (from README)
-*   Distributed locks (Redis/Etcd integration).
-*   Persistence layer (SQLite/BadgerDB).
-*   Web Dashboard for monitoring.

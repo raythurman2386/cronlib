@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/raythurman2386/cronlib"
-	"github.com/raythurman2386/cronlib/lock/redis"
+	"github.com/raythurman2386/cronlib/pkg/lock/redis"
 )
 
 func main() {
